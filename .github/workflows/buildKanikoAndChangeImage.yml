@@ -1,0 +1,91 @@
+name: Build with Kaniko and change image
+
+on:
+  workflow_call:
+    inputs:
+      namespace:
+        required: true
+        type: string
+      app_name:
+        required: true
+        type: string
+      image_repository_name:
+        required: true
+        type: string
+      cluster_name:
+        required: true
+        type: string
+      timeout:
+        type: string
+        default: "5m"
+      runner:
+        type: string
+        default: "ubuntu"
+      environment:
+        type: string
+        default: "dev"
+      kaniko_verbosity:
+        type: string
+        default: "info"
+      working-directory:
+        type: string
+        default: "./"
+      dockerfile:
+        type: string
+        default: "Dockerfile"
+      prefix:
+        type: string
+        default: ""
+      branch:
+        type: string
+        default: "main"
+    secrets:
+      aws_account_id:
+        required: true
+      personal_token:
+        required: true
+jobs:
+  deployment-kaniko:
+    runs-on: ${{inputs.runner}}
+    environment: ${{inputs.environment}}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: set job env
+        run: |
+          echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c 1-8`" >> $GITHUB_ENV
+          aws eks update-kubeconfig --name ${{inputs.cluster_name}} --region us-east-1
+          kubectl config set-context --current --namespace=${{inputs.namespace}}
+      - name: build with kaniko.
+        run: |
+          kubectl run --rm kaniko-${{inputs.app_name}}-${SHORT_SHA} \
+          --namespace=runner --attach=true \
+          --image=gcr.io/kaniko-project/executor:latest \
+          --restart=Never -- \
+          --verbosity=${{inputs.kaniko_verbosity}} \
+          --context=git://${{secrets.personal_token}}@github.com//${GITHUB_REPOSITORY}#refs/heads/${{inputs.branch}} \
+          --destination=${{secrets.aws_account_id}}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA} \
+          --destination=${{secrets.aws_account_id}}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.image_repository_name}}:latest-${{inputs.prefix}} --git=branch=${GITHUB_BRANCH} \
+          --context-sub-path=${{inputs.working-directory}} \
+          --dockerfile=${{inputs.dockerfile}} \
+          --cache=false
+      - name: kubernetes deploy
+        id: deploy
+        run: |
+          kubectl set image deploy/${{inputs.app_name}}  ${{inputs.app_name}}=${{secrets.aws_account_id}}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA} --record
+
+      - name: kubernetes deployment status
+        run: |
+          kubectl rollout status deployment ${{inputs.app_name}} --timeout=${{inputs.timeout}}
+
+      - name: rollback
+        if: steps.deploy.outcome != 'success'
+        run: |
+          kubectl rollout undo deploy ${{inputs.app_name}}
+      - name: kubernetes deployment check
+        run: |
+          kubectl get deploy ${{inputs.app_name}}
