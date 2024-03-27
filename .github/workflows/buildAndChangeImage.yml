@@ -27,6 +27,9 @@ on:
       prefix:
         type: string
         default: ""
+      directory:
+        type: string
+        default: "."
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
@@ -65,7 +68,7 @@ jobs:
         --tag ${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:latest-${{inputs.prefix}} \
         --tag ${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA} \
         -f ${{inputs.dockerfile}} \
-        .
+        ${{ inputs.directory }}
         docker push ${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:latest-${{inputs.prefix}}
         docker push ${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA}
 
