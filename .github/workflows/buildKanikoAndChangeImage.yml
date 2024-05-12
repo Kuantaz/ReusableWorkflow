@@ -62,7 +62,7 @@ jobs:
           kubectl config set-context --current --namespace=${{inputs.namespace}}
       - name: build with kaniko.
         run: |
-          kubectl run --rm kaniko-${{inputs.app_name}}-${SHORT_SHA} \
+          kubectl run --overrides='{"apiVersion": "v1", "spec": {"nodeSelector": { "kubernetes.io/arch": "arm64" }}}' --rm kaniko-${{inputs.app_name}}-${SHORT_SHA} \
           --namespace=runner --attach=true \
           --image=gcr.io/kaniko-project/executor:latest \
           --restart=Never -- \
@@ -71,7 +71,6 @@ jobs:
           --destination=${{secrets.aws_account_id}}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA} \
           --destination=${{secrets.aws_account_id}}.dkr.ecr.us-east-1.amazonaws.com/${{inputs.image_repository_name}}:latest-${{inputs.prefix}} --git=branch=${GITHUB_BRANCH} \
           --context-sub-path=${{inputs.working-directory}} \
-          --custom-platform=linux/arm \
           --dockerfile=${{inputs.dockerfile}}
           
       - name: kubernetes deploy
