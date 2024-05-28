@@ -12,9 +12,6 @@ on:
       runner:
         required: true
         type: string
-      environment:
-        type: string
-        default: "dev"
       dockerfile:
         type: string
         default: "Dockerfile"
@@ -32,7 +29,6 @@ on:
 jobs:
   build:
     runs-on: ${{inputs.runner}}
-    environment: ${{inputs.environment}}
     steps:
     - name: Clone
       uses: actions/checkout@v3
