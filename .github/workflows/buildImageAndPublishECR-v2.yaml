@@ -18,6 +18,9 @@ on:
       prefix:
         type: string
         default: ""
+      environment:
+        type: string
+        default: "dev"
       directory:
         type: string
         default: "."
@@ -29,6 +32,7 @@ on:
 jobs:
   build:
     runs-on: ${{inputs.runner}}
+    environment: ${{inputs.environment}}
     steps:
     - name: Clone
       uses: actions/checkout@v3
