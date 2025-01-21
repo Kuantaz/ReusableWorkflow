@@ -64,7 +64,7 @@ jobs:
         run: |
           kubectl run --overrides='{"apiVersion": "v1", "spec": {"nodeSelector": { "kubernetes.io/arch": "arm64" }}}' --rm kaniko-${{inputs.app_name}}-${SHORT_SHA} \
           --namespace=runner --attach=true \
-          --image=gcr.io/kaniko-project/executor:latest \
+          --image=gcr.io/kaniko-project/executor:v1.9.1 \
           --restart=Never -- \
           --verbosity=${{inputs.kaniko_verbosity}} \
           --context=git://${{secrets.personal_token}}@github.com//${GITHUB_REPOSITORY}#refs/heads/${{inputs.branch}} \
