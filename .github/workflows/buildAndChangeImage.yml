@@ -30,6 +30,12 @@ on:
       directory:
         type: string
         default: "."
+      cronjob_name:
+        type: string
+        default: ""
+      cron_container_name:
+        type: string
+        default: "scheduler"
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
@@ -91,6 +97,15 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
         kubectl set image deploy/${{inputs.app_name}}  ${{inputs.app_name}}=${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA} --record --namespace=${{inputs.namespace}}
+    - name: Update CronJob image
+      if: inputs.cronjob_name != ''
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        kubectl set image cronjob/${{ inputs.cronjob_name }} \
+          ${{ inputs.cron_container_name }}=${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA} \
+          --record --namespace=${{inputs.namespace}}
+        kubectl get cronjob ${{ inputs.cronjob_name }} --namespace=${{inputs.namespace}}
     - name: kubernetes deployment status
       run: |
         kubectl rollout status deployment ${{inputs.app_name}} --timeout=${{inputs.timeout}} --namespace=${{inputs.namespace}}
