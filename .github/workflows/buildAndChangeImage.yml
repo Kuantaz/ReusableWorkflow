@@ -72,8 +72,8 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          CACHE_FROM: "type=registry,ref=${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:cache-${{inputs.prefix}}"
-          CACHE_TO: "type=registry,ref=${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:cache-${{inputs.prefix}},mode=max"
+          CACHE_FROM: "type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{inputs.image_repository_name}}:cache-${{inputs.prefix}}"
+          CACHE_TO: "type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{inputs.image_repository_name}}:cache-${{inputs.prefix}},mode=max"
           DOCKER_BUILDKIT: "1"
         run: |
           # BuildKit cache flags are only added when the caller passes them,
@@ -88,14 +88,14 @@ jobs:
 
           docker buildx build \
             --load \
-            --tag ${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:latest-${{inputs.prefix}} \
-            --tag ${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA} \
+            --tag $ECR_REGISTRY/${{inputs.image_repository_name}}:latest-${{inputs.prefix}} \
+            --tag $ECR_REGISTRY/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA} \
             -f ${{inputs.dockerfile}} \
             $CACHE_FLAGS \
             ${{ inputs.directory }}
 
-          docker push ${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:latest-${{inputs.prefix}}
-          docker push ${{ env.ECR_REGISTRY }}/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA}
+          docker push $ECR_REGISTRY/${{inputs.image_repository_name}}:latest-${{inputs.prefix}}
+          docker push $ECR_REGISTRY/${{inputs.image_repository_name}}:${TAG}-${{inputs.prefix}}-${SHORT_SHA}
 
       - name: Install and configure kubectl
         run: |
