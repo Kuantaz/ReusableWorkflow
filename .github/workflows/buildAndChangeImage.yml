@@ -36,16 +36,6 @@ on:
       cron_container_name:
         type: string
         default: "scheduler"
-      cache_from:
-        description: "BuildKit cache source (e.g. type=registry,ref=ecr/foo:cache). Leave empty to disable."
-        required: false
-        type: string
-        default: "type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.CACHE_TAG }}"
-      cache_to:
-        description: "BuildKit cache destination (e.g. type=registry,ref=ecr/foo:cache,mode=max). Leave empty to disable."
-        required: false
-        type: string
-        default: "type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.CACHE_TAG }},mode=max"
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
