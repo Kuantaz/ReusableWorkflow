@@ -40,12 +40,12 @@ on:
         description: "BuildKit cache source (e.g. type=registry,ref=ecr/foo:cache). Leave empty to disable."
         required: false
         type: string
-        default: ""
+        default: "type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.CACHE_TAG }}"
       cache_to:
         description: "BuildKit cache destination (e.g. type=registry,ref=ecr/foo:cache,mode=max). Leave empty to disable."
         required: false
         type: string
-        default: ""
+        default: "type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.CACHE_TAG }},mode=max"
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
@@ -79,8 +79,8 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          CACHE_FROM: ${{ inputs.cache_from }}
-          CACHE_TO: ${{ inputs.cache_to }}
+          CACHE_FROM: "type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.CACHE_TAG }}"
+          CACHE_TO: "type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.CACHE_TAG }},mode=max"
           DOCKER_BUILDKIT: "1"
         run: |
           # BuildKit cache flags are only added when the caller passes them,
